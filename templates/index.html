@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume ATS Scorer & Assistant</title>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap)" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+            color: #1f2937;
+        }
+        .form-group input[type="file"],
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            color: #4b5563;
+        }
+        .form-group input[type="file"] {
+            padding: 0.75rem 0.5rem; /* Adjust padding for file input */
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: #1e40af;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+            color: #ffffff;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+            transform: translateY(-1px);
+        }
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+            color: #4f46e5;
+        }
+        .result-box {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .result-box h3 {
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        .result-box ul {
+            list-style: disc;
+            margin-left: 1.5rem;
+        }
+        .result-box li {
+            margin-bottom: 0.5rem;
+        }
+        .tab-button {
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            background-color: #e5e7eb;
+            color: #4b5563;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .tab-button.active {
+            background-color: #ffffff;
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+        }
+        .tab-content {
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            padding: 1.5rem;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Resume ATS Scorer & Assistant</h1>
+
+        <!-- ATS Score Tab -->
+        <div id="atsScore" class="tab-content">
+            <form id="uploadForm" class="space-y-4">
+                <div class="form-group">
+                    <label for="resumeFile">Upload Your Resume (PDF only):</label>
+                    <input type="file" id="resumeFile" name="resume" accept=".pdf" required
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+                <div class="form-group">
+                    <label for="jobType">Job Type You're Applying For (e.g., Data Analyst, Software Engineer):</label>
+                    <input type="text" id="jobType" name="job_type" placeholder="e.g., Senior Data Scientist"
+                           class="focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Get ATS Score</button>
+            </form>
+
+            <div id="loadingATS" class="loading-indicator">
+                <p>Analyzing resume... This may take a moment.</p>
+            </div>
+
+            <div id="atsResult" class="result-box hidden">
+                <h3 class="text-2xl font-bold mb-2">ATS Score: <span id="scoreValue" class="text-blue-600"></span></h3>
+                <h3 class="text-xl font-semibold mt-4 mb-2">Suggestions for Improvement:</h3>
+                <ul id="suggestionsList" class="list-disc pl-5">
+                    <!-- Suggestions will be inserted here -->
+                </ul>
+            </div>
+            <div id="errorATS" class="text-red-600 text-center mt-4 hidden"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // Function to switch tabs (only ATS Score remains)
+        function showTab(tabId) {
+            // Only 'atsScore' tab exists now
+            const tabs = ['atsScore']; 
+            tabs.forEach(tab => {
+                document.getElementById(tab).classList.add('hidden');
+            });
+            document.getElementById(tabId).classList.remove('hidden');
+
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`button[onclick="showTab('${tabId}')"]`).classList.add('active');
+        }
+
+        // Handle ATS Score form submission
+        document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('resumeFile');
+            const jobTypeInput = document.getElementById('jobType');
+            const loadingATS = document.getElementById('loadingATS');
+            const atsResult = document.getElementById('atsResult');
+            const errorATS = document.getElementById('errorATS');
+            const scoreValue = document.getElementById('scoreValue');
+            const suggestionsList = document.getElementById('suggestionsList');
+
+            atsResult.classList.add('hidden');
+            errorATS.classList.add('hidden');
+            loadingATS.style.display = 'block';
+            scoreValue.textContent = '';
+            suggestionsList.innerHTML = ''; 
+
+            if (fileInput.files.length === 0) {
+                errorATS.textContent = "Please select a resume file.";
+                errorATS.classList.remove('hidden');
+                loadingATS.style.display = 'none';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('resume', fileInput.files[0]);
+            formData.append('job_type', jobTypeInput.value);
+
+            try {
+                const response = await fetch('/upload_resume', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    scoreValue.textContent = `${data.atsScore}/100`;
+                    suggestionsList.innerHTML = '';
+                    if (data.suggestions && data.suggestions.length > 0) {
+                        data.suggestions.forEach(suggestion => {
+                            const li = document.createElement('li');
+                            li.textContent = suggestion;
+                            suggestionsList.appendChild(li);
+                        });
+                    } else {
+                        const li = document.createElement('li');
+                        li.textContent = "No specific suggestions provided. Ensure your resume highlights relevant skills and experience.";
+                        suggestionsList.appendChild(li);
+                    }
+                    atsResult.classList.remove('hidden');
+
+                } else {
+                    errorATS.textContent = data.error || "An unknown error occurred.";
+                    errorATS.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorATS.textContent = "Failed to connect to the server or process the request. Please try again.";
+                errorATS.classList.remove('hidden');
+            } finally {
+                loadingATS.style.display = 'none';
+            }
+        });
+
+        showTab('atsScore');
+    </script>
+</body>
+</html>
