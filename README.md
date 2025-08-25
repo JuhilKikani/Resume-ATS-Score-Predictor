@@ -50,3 +50,10 @@ The **Resume ATS Score Predictor** is a web-based tool designed to help job seek
 
 ---
 
+# 🙋‍♂️ Author
+- **Juhil Kikani**
+- [LinkedIn](https://www.linkedin.com/in/juhilkikani)
+- Email: [juhilkikani07@gmail.com](mailto:juhilkikani07@gmail.com)
+
+# ⭐️ Give it a Star
+  If you liked this project, don’t forget to ⭐️ the repo!
